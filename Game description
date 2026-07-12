@@ -1,0 +1,51 @@
+1.1 Voronoi Diagramm 
+
+Ein Voronoi-Diagramm ist eine Art, einen Raum (in unserem Fall eine flache Ebene) in verschiedene Regionen aufzuteilen. 
+* Du platzierst mehrere Startpunkte (sogenannte "Zentren") auf dem Spielfeld.
+* Jeder Punkt auf dem restlichen Spielfeld wird nun der Region des Zentrums zugeordnet, das ihm am **nächsten** liegt.
+
+Ein anschauliches Beispiel: Stell dir vor, zwei Supermarktketten eröffnen Filialen in einer Stadt. Wenn jeder Bewohner 
+automatisch immer zum am schnellsten erreichbaren Supermarkt geht, teilen die Einzugsgebiete der Märkte die Stadt genau wie
+ein Voronoi-Diagramm auf. Wer seine Filialen klüger platziert, sichert sich das größte Einzugsgebiet!
+
+1.2 Das Spiel 
+
+* Das Spielfeld: Ein quadratisches, anfangs leeres Feld.
+* Der Ablauf: Zwei Spieler setzen abwechselnd jeweils einen Punkt auf das Feld.
+* Das Spielende: Sobald beide Spieler eine festgelegte Anzahl von Punkten (k Punkte) platziert haben, stoppt das Spiel.
+* Das Ziel: Das Spielfeld färbt sich dynamisch in den Farben der Spieler (basierend auf den Voronoi-Zellen). Es gewinnt der 
+Spieler, dessen Zonen am Ende insgesamt die "größte Fläche" des Spielfelds einnehmen.
+
+1.3 Implementation 
+Die direkte Berechnung von Voronoi-Zellen kann mathematisch sehr aufwendig werden. Deshalb nutzt dieses Programm einen cleveren geometrischen 
+Zwilling: die Delaunay-Triangulierung.
+
+### Der Trick mit den Dreiecken
+Statt mühsam für jeden Pixel den Abstand zu berechnen, verbinden wir die gesetzten Spielerpunkte zu einem Netz aus **Dreiecken**. Ein Dreieck 
+ist "Delaunay-konform", wenn in seinem Umkreis kein anderer Spielerpunkt liegt. 
+
+Sobald das Dreiecksnetz perfekt sitzt, erhalten wir das Voronoi-Diagramm quasi geschenkt: Die exakten Mittelpunkte dieser Dreiecksumkreise 
+bilden nämlich die Ecken unserer Voronoi-Zellen!
+
+### Schritt-für-Schritt im Code:
+1. Das Riesen-Dreieck (Bounding Triangle): Bevor der erste Zug gemacht wird, spannt der Code ein unsichtbares, gigantisches Dreieck auf, 
+das das gesamte Spielfeld umschließt. So landet jeder neue Punkt garantiert *innerhalb* eines existierenden Dreiecks.
+2. Punkt einfügen: Klickt ein Spieler auf das Feld, sucht der Algorithmus das betroffene Dreieck, löscht es und verbindet den neuen Punkt
+mit den drei alten Ecken (aus 1 Dreieck werden 3 neue).
+3. Das "Edge-Flipping" (Kanten-Tausch): Der Code prüft sofort mit einer einfachen Matrix-Berechnung (Determinante), ob die neuen Dreiecke 
+die Umkreis-Regel verletzen. Wenn ja, wird die Kante zwischen zwei Dreiecken "umgeklappt" (Edge-Flip), bis das Netz wieder mathematisch stabil ist.
+4. Datenstruktur (DCEL): Damit das blitzschnell in einer Laufzeit von $O(n^2)$ oder besser funktioniert, nutzen wir eine Doubly Connected 
+Edge List. Das ist ein Netzwerksystem, in dem jede Kante weiß, wer ihr Nachbar ist, wer vor ihr kommt und welches Dreieck links von ihr liegt.
+
+4. Visualisierung & Benutzeroberfläche
+
+Die gesamte Interaktivität läuft direkt über das Terminal oder ein grafisches Fenster:
+
+* Grafisches Feedback: Bei jedem Klick berechnet das Programm im Hintergrund das Dreiecksnetz neu, wandelt es in Voronoi-Zellen um und färbt die Flächen 
+live in den Spielerfarben ein.
+* Interaktive Steuerung: Spieler können ihre Züge per Mauseingabe direkt auf dem Spielfeld platzieren.
+* Architektur: Der Code ist als modulares Julia-Projekt strukturiert. Die Kernlogik (Geometrie und Algorithmen) ist strikt von der Benutzeroberfläche
+(UI-Rendering) getrennt, um maximale Performance und saubere Testbarkeit (Unit-Tests) zu garantieren.
+
+
+
